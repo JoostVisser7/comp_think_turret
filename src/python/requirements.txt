@@ -1,0 +1,8 @@
+numpy
+matplotlib
+scipy
+numba
+pyserial
+ultralytics
+webcam
+opencv-python
