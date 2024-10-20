@@ -50,23 +50,26 @@ def main():
     # metrics = _model.val()
     
     for frame in _webcam:
-        # color correct the frame because apparently cv2 doesn't work with RGB but instead BGR?
+        # swap colour channels because cv2 works with BGR instead of RGB values for some reason
         frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         
-        # track object
+        # track object and copy tracking data to cpu memory
         results = _model.track(frame, persist=True)[0].cpu()
         
+        # create annotated frame with detection boxes, labels and confidence values
         annotated_frame = results.plot()
         
-        # gets all the relevant data of all boxes stored in a list of lists containing
+        # get all the relevant data of all boxes stored in a list of lists containing
         # [corner 1 x, corner 1 y, corner 2 x, corner 2 y, track id, confidence, classification]
         boxes = results.boxes.data.tolist()
         
+        # go over all the boxes, check if they are classified as person and put a crosshair if the confidence is greater
+        # than specified by _MIN_CONFIDENCE
         for box in boxes:
             c1x, c1y, c2x, c2y, track_id, conf, cls = tuple(box)
             box_center = int((c1x + c2x) / 2), int((c1y + c2y) / 2)
+            
             if int(cls) == _PERSON_CLASS_ID and conf >= _MIN_CONFIDENCE:
-                # draw crosshair on target center
                 annotated_frame = draw_cross(frame=annotated_frame, center=box_center, color=(255., 0., 0.))
                 annotated_frame = cv2.putText(
                     img=annotated_frame,
@@ -89,7 +92,7 @@ def main():
         
         cv2.imshow("Webcam Frame", annotated_frame)
         
-        # exit if user presses q
+        # exit loop if user presses q
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
     
