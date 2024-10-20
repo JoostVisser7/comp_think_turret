@@ -9,7 +9,7 @@ _FRAME_HEIGHT: int = 480
 _PERSON_CLASS_ID: int = 0
 _MIN_CONFIDENCE: float = 0.8
 
-_model = YOLO("./runs/detect/train4/weights/best.pt")
+_model = YOLO("./yolo_models/640x480_100epoch.pt")
 _webcam = Webcam(src=0, w=_FRAME_WIDTH, h=_FRAME_HEIGHT)
 
 
