@@ -12,6 +12,8 @@ _MIN_CONFIDENCE: float = 0.8
 _model = YOLO("./yolo_models/640x480_100epoch.pt")
 _webcam = Webcam(src=0, w=_FRAME_WIDTH, h=_FRAME_HEIGHT)
 
+#hallo mensen
+
 
 def draw_cross(
         frame: np.ndarray,
