@@ -3,7 +3,6 @@ from ultralytics import YOLO
 from webcam import Webcam
 import numpy as np
 
-# test comment
 _FRAME_WIDTH: int = 640
 _FRAME_HEIGHT: int = 480
 
