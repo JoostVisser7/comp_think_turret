@@ -14,7 +14,7 @@ _webcam = Webcam(src=0, w=_FRAME_WIDTH, h=_FRAME_HEIGHT)
 
 #hallo mensen
 #hi
-
+#hi2
 
 def draw_cross(
         frame: np.ndarray,
