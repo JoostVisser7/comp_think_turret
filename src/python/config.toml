@@ -1,0 +1,13 @@
+# serial config
+com-port = "COM4"
+baud-rate = 9600
+
+# model config
+model-path = "./640px_100epoch.pt"
+person-class-id = 0
+min-confidence = 0.8
+
+# video config
+video-source = 0
+video-width = 640
+video-height = 480

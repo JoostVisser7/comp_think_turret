@@ -1,11 +1,15 @@
+from tomllib import load
+from time import sleep
+
 import cv2
 from serial import Serial
-from time import sleep
+
 from vision import get_frame_data
 
 
-COM_PORT: str = "COM4"
-BAUD_RATE: int = 9600
+# load configuration data
+with open("./config.toml", "rb") as config_file:
+    CONFIG_DICT: dict = load(config_file)
 
 
 def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool = False, trigger: bool = False) -> None:
@@ -32,7 +36,7 @@ def main():
     
     # establish arduino connection and give time it time to initialize
     # running in context manager such that the connection gets closed properly if an exception is raised during runtime
-    with Serial(port=COM_PORT, baudrate=BAUD_RATE) as arduino:
+    with Serial(port=CONFIG_DICT["com-port"], baudrate=CONFIG_DICT["baud-rate"]) as arduino:
         sleep(2)
         
         running = True
@@ -46,13 +50,14 @@ def main():
             frame_data = get_frame_data()
             
             if frame_data.targets:
-                dx = frame_data.targets[0].center_x - frame_data.frame_width // 2
-                dy = frame_data.targets[0].center_y - frame_data.frame_height // 2
+                dx = frame_data.targets[0].center_x - CONFIG_DICT["video-width"] // 2
+                dy = frame_data.targets[0].center_y - CONFIG_DICT["video-height"] // 2
                 angles = calculate_rotation(dx=dx, dy=dy)
                 send_command(arduino=arduino, angle=angles)
             
             cv2.imshow(winname="vision", mat=frame_data.annotated_frame)
             
+            # if user presses "q", end the program
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 running = False
             

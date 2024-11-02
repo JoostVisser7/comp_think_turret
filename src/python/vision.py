@@ -1,19 +1,17 @@
+from tomllib import load
 from dataclasses import dataclass
+
 import numpy as np
 from webcam import Webcam
 import cv2
 from ultralytics import YOLO
 
 
-_VIDEO_SOURCE: int = 0
-_VIDEO_WIDTH: int = 640
-_VIDEO_HEIGHT: int = 480
+with open("./config.toml", "rb") as config_file:
+    CONFIG_DICT: dict = load(config_file)
 
-_PERSON_CLASS_ID: int = 0
-_MIN_CONFIDENCE: float = 0.8
-
-_model = YOLO("640px_100epoch.pt")
-_camera: Webcam = Webcam(src=_VIDEO_SOURCE, w=_VIDEO_WIDTH, h=_VIDEO_HEIGHT)
+_model = YOLO(CONFIG_DICT["model-path"])
+_camera: Webcam = Webcam(src=CONFIG_DICT["video-source"], w=CONFIG_DICT["video-width"], h=CONFIG_DICT["video-height"])
 
 
 class Target:
@@ -58,8 +56,6 @@ class Target:
 @dataclass(slots=True)
 class FrameData:
     targets: list[Target]
-    frame_width: int
-    frame_height: int
     annotated_frame: np.ndarray
 
 
@@ -82,15 +78,13 @@ def get_frame_data() -> FrameData:
             box.insert(4, None)
         
         # if the object is classified as a person and the confidence is above the minimum threshold
-        if int(box[6]) == _PERSON_CLASS_ID and box[5] > _MIN_CONFIDENCE:
+        if int(box[6]) == CONFIG_DICT["person-class-id"] and box[5] > CONFIG_DICT["min-confidence"]:
             raw_targets.append(box)
     
     annotated_frame = results.plot()
     
     return FrameData(
         targets=[Target(*target) for target in raw_targets],
-        frame_width=_VIDEO_WIDTH,
-        frame_height=_VIDEO_HEIGHT,
         annotated_frame=annotated_frame
     )
 
