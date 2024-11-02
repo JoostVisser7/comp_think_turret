@@ -1,7 +1,7 @@
 import cv2
 from serial import Serial
 from time import sleep
-from vision import get_frame_data, Target
+from vision import get_frame_data
 
 
 COM_PORT: str = "COM4"
@@ -25,7 +25,7 @@ def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool =
 
 
 def calculate_rotation(dx: int, dy: int) -> tuple[int, int]:
-    return dx, dy
+    return -dx, -dy
 
 
 def main():
