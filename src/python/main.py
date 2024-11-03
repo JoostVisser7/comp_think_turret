@@ -105,8 +105,8 @@ def main():
                 trigger_ready = True
             
             if frame_data.targets:
-                dx = frame_data.targets[0].center_x - CONFIG_DICT["video-width"] // 2
-                dy = frame_data.targets[0].center_y - CONFIG_DICT["video-height"] // 2
+                dx = frame_data.targets[0].hitbox_center_x - CONFIG_DICT["video-width"] // 2
+                dy = frame_data.targets[0].hitbox_center_y - CONFIG_DICT["video-height"] // 2
                 
                 if (
                     abs(dx) <= int(frame_data.targets[0].size_x * CONFIG_DICT["hitbox-size-fraction"]) and

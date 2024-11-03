@@ -29,6 +29,8 @@ class Target:
         "center_y",
         "size_x",
         "size_y",
+        "hitbox_center_x",
+        "hitbox_center_y",
         "hitbox1_x",
         "hitbox1_y",
         "hitbox2_x",
@@ -55,10 +57,12 @@ class Target:
         self.size_x: int = abs(self.corner1_x - self.center_x)
         self.size_y: int = abs(self.corner1_y - self.center_y)
         
-        self.hitbox1_x: int = self.center_x - int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
-        self.hitbox1_y: int = self.center_y - int(self.size_y * CONFIG_DICT["hitbox-size-fraction"])
-        self.hitbox2_x: int = self.center_x + int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
-        self.hitbox2_y: int = self.center_y + int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
+        self.hitbox_center_x: int = self.center_x + int(self.size_x * CONFIG_DICT["hitbox-offset-x-fraction"])
+        self.hitbox_center_y: int = self.center_y + int(self.size_y * CONFIG_DICT["hitbox-offset-y-fraction"])
+        self.hitbox1_x: int = self.hitbox_center_x - int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
+        self.hitbox1_y: int = self.hitbox_center_y - int(self.size_y * CONFIG_DICT["hitbox-size-fraction"])
+        self.hitbox2_x: int = self.hitbox_center_x + int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
+        self.hitbox2_y: int = self.hitbox_center_y + int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
         
         self.track_id: int | None = int(track_id) if track_id is not None else None
         self.confidence: float = confidence
