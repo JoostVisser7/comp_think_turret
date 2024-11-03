@@ -34,8 +34,6 @@ Servo hor_servo,
       ver_servo,
       tri_servo;
 
-String message;
-
 
 /*
  * Operational code
@@ -73,7 +71,7 @@ void adjust_rotation(char axis, int adjustment) {
   }
 }
 
-void message_parser() {
+void message_parser(String message) {
   // rotation commands are of the format r(+|-)xx,(+|-)yy
   if (message[0] == 'r') {
     int separator = message.indexOf(',');
@@ -119,9 +117,9 @@ void setup() {
 
 void loop() {
   if (Serial.available() > 0) {
-    message = Serial.readStringUntil('\n');
+    String message = Serial.readStringUntil('\n');
     
-    message_parser();   // interpret message and change appropriate globals
+    message_parser(message);   // interpret message and change appropriate globals
 
     if (triggered) {    // pull trigger
       tri_servo.write(tri_servo_hot);
