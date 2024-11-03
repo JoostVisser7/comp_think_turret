@@ -141,13 +141,13 @@ def main():
                     color=box_colour,
                     thickness=2
                 )
-                frame_data.frame = cv2.circle(
-                    img=frame_data.frame,
-                    center=(CONFIG_DICT["video-width"] // 2, CONFIG_DICT["video-height"] // 2),
-                    radius=2,
-                    color=(0, 0, 255),   # red
-                    thickness=-1
-                )
+            frame_data.frame = cv2.circle(
+                img=frame_data.frame,
+                center=(CONFIG_DICT["video-width"] // 2, CONFIG_DICT["video-height"] // 2),
+                radius=2,
+                color=(0, 0, 255),   # red
+                thickness=-1
+            )
             
             cv2.imshow(winname="vision", mat=frame_data.frame)
         

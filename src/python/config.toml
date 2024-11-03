@@ -13,10 +13,11 @@ video-height = 480
 # tolerances config
 min-confidence = 0.8
 person-class-id = 0
-min-target-size-x = 120
-min-target-size-y = 300
+min-target-size-x = 60
+min-target-size-y = 200
 hitbox-offset-x-fraction = 0.0
 hitbox-offset-y-fraction = -0.5
 
+# misc config
 hitbox-size-fraction = 0.1
 trigger-cooldown-seconds = 3
