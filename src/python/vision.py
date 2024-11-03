@@ -28,7 +28,11 @@ class Target:
         "center_x",
         "center_y",
         "size_x",
-        "size_y"
+        "size_y",
+        "hitbox1_x",
+        "hitbox1_y",
+        "hitbox2_x",
+        "hitbox2_y"
     ]
     
     def __init__(
@@ -45,13 +49,20 @@ class Target:
         self.corner1_y: int = round(c1y)
         self.corner2_x: int = round(c2x)
         self.corner2_y: int = round(c2y)
-        self.track_id: int | None = int(track_id) if track_id is not None else None
-        self.confidence: float = confidence
-        self.classification: int = int(classification)
+        
         self.center_x: int = (self.corner1_x + self.corner2_x) // 2
         self.center_y: int = (self.corner1_y + self.corner2_y) // 2
         self.size_x: int = abs(self.corner1_x - self.center_x)
         self.size_y: int = abs(self.corner1_y - self.center_y)
+        
+        self.hitbox1_x: int = self.center_x - int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
+        self.hitbox1_y: int = self.center_y - int(self.size_y * CONFIG_DICT["hitbox-size-fraction"])
+        self.hitbox2_x: int = self.center_x + int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
+        self.hitbox2_y: int = self.center_y + int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
+        
+        self.track_id: int | None = int(track_id) if track_id is not None else None
+        self.confidence: float = confidence
+        self.classification: int = int(classification)
 
 
 @dataclass(slots=True)

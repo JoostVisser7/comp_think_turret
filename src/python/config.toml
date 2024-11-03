@@ -11,3 +11,7 @@ min-confidence = 0.8
 video-source = 1
 video-width = 640
 video-height = 480
+
+# tolerances config
+hitbox-size-fraction = 0.1
+trigger-cooldown-seconds = 3
