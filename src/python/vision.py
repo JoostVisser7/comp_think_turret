@@ -93,9 +93,23 @@ def get_frame_data() -> FrameData:
         if len(box) == 6:
             box.insert(4, None)
         
-        # if the object is classified as a person and the confidence is above the minimum threshold
-        if int(box[6]) == CONFIG_DICT["person-class-id"] and box[5] > CONFIG_DICT["min-confidence"]:
-            raw_targets.append(box)
+        # if the object is not classified as a person start next iteration early
+        if int(box[6]) != CONFIG_DICT["person-class-id"]:
+            continue
+        
+        # if the confidence is below the minimum threshold start next iteration early
+        if box[5] < CONFIG_DICT["min-confidence"]:
+            continue
+        
+        # if the box is too small horizontally start next iteration early
+        if abs(box[0] - box[2]) < CONFIG_DICT["min-target-size-x"]:
+            continue
+        
+        # if the box is too small vertically start next iteration early
+        if abs(box[1] - box[3]) < CONFIG_DICT["min-target-size-y"]:
+            continue
+        
+        raw_targets.append(box)
     
     return FrameData(targets=[Target(*target) for target in raw_targets], frame=frame)
 
