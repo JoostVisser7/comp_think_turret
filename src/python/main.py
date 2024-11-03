@@ -121,7 +121,7 @@ def main():
             angles = calculate_rotation(dx=dx, dy=dy)
             send_command(arduino=arduino, angle=angles, trigger=trigger)
             
-            # ----- drawing and annotating frame -----
+            # ----- annotating frame -----
             
             for i, target in enumerate(frame_data.targets):
                 box_colour = 255, 0, 0  # blue
@@ -151,6 +151,7 @@ def main():
             
             cv2.imshow(winname="vision", mat=frame_data.frame)
         
+        # turret return to home on shutdown
         send_command(arduino=arduino, home=True)
             
         

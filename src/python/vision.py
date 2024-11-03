@@ -11,11 +11,12 @@ from ultralytics import YOLO
 with open("./config.toml", "rb") as config_file:
     CONFIG_DICT: dict = load(config_file)
 
-_model = YOLO(CONFIG_DICT["model-path"])
+_model: YOLO = YOLO(CONFIG_DICT["model-path"])
 _camera: Webcam = Webcam(src=CONFIG_DICT["video-source"], w=CONFIG_DICT["video-width"], h=CONFIG_DICT["video-height"])
 
 
 class Target:
+    
     # __slots__ makes class attributes static, which increases performance and reduces chances of silent errors
     __slots__ = [
         "corner1_x",
