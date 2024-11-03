@@ -8,6 +8,6 @@ person-class-id = 0
 min-confidence = 0.8
 
 # video config
-video-source = 0
+video-source = 1
 video-width = 640
 video-height = 480

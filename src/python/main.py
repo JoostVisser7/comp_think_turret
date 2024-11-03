@@ -4,7 +4,7 @@ from time import sleep
 import cv2
 from serial import Serial
 
-from vision import get_frame_data
+from vision import get_frame_data, Target
 
 
 # load configuration data
@@ -27,17 +27,44 @@ def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool =
 
 
 def calculate_rotation(dx: int, dy: int) -> tuple[int, int]:
+    
     return -dx, -dy
+
+
+def ensure_target_order(unsorted_targets: list[Target], old_order: list[int]) -> tuple[list, list]:
+    sorted_targets = []
+    new_order = []
+    
+    # print("old: ", old_order)
+    
+    # for every target id in order, remove the target with the same track_id from the unsorted list and add it to the
+    # sorted list
+    for target_id in old_order:
+        target_index = next((i for i, target in enumerate(unsorted_targets) if target.track_id == target_id), None)
+        if target_index is not None:
+            sorted_targets.append(unsorted_targets.pop(target_index))
+            new_order.append(target_id)
+    
+    # add remaining (new) target ids to sorted list
+    sorted_targets += unsorted_targets
+    new_order = [target.track_id for target in sorted_targets]
+    
+    # print("new", new_order)
+    
+    return sorted_targets, new_order
 
 
 def main():
     
-    # establish arduino connection and give time it time to initialize
+    # establish arduino connection and give the microcontroller time to initialize
     # running in context manager such that the connection gets closed properly if an exception is raised during runtime
     with Serial(port=CONFIG_DICT["com-port"], baudrate=CONFIG_DICT["baud-rate"]) as arduino:
         sleep(2)
         
         running = True
+        key_released = True
+        
+        target_order = []
         
         while running:
             
@@ -46,6 +73,30 @@ def main():
                 continue
             
             frame_data = get_frame_data()
+            frame_data.targets, target_order = ensure_target_order(frame_data.targets, target_order)
+            
+            keypress = cv2.waitKey(1) & 0xFF
+            print(keypress, key_released)
+            
+            # if user presses "q": end the program
+            if keypress == ord("q"):
+                running = False
+            
+            # if users presses ",": move first target to end of list
+            elif keypress == ord(",") and key_released:
+                frame_data.targets.append(frame_data.targets.pop(0))
+                target_order.append(target_order.pop(0))
+                key_released = False
+            
+            # if user presses ".": move last target to beginning of list
+            elif keypress == ord(".") and key_released:
+                frame_data.targets.insert(0, frame_data.targets.pop(-1))
+                target_order.insert(0, target_order.pop(-1))
+                key_released = False
+            
+            # cv2.waitKey() returns 255 if no key is pressed
+            elif keypress == 255:
+                key_released = True
             
             if frame_data.targets:
                 dx = frame_data.targets[0].center_x - CONFIG_DICT["video-width"] // 2
@@ -55,11 +106,21 @@ def main():
             angles = calculate_rotation(dx=dx, dy=dy)
             send_command(arduino=arduino, angle=angles)
             
-            cv2.imshow(winname="vision", mat=frame_data.annotated_frame)
+            for i, target in enumerate(frame_data.targets):
+                box_colour = 255, 0, 0  # blue
+                if not i:
+                    box_colour = 0, 255, 255  # yellow
+                frame_data.frame = cv2.rectangle(
+                    img=frame_data.frame,
+                    pt1=(target.corner1_x, target.corner1_y),
+                    pt2=(target.corner2_x, target.corner2_y),
+                    color=box_colour,
+                    thickness=2
+                )
             
-            # if user presses "q", end the program
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                running = False
+            cv2.imshow(winname="vision", mat=frame_data.frame)
+        
+        send_command(arduino=arduino, home=True)
             
         
 # only call main() main when this file is ran directly as opposed to imported

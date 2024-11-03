@@ -7,6 +7,7 @@ import cv2
 from ultralytics import YOLO
 
 
+# load configuration data
 with open("./config.toml", "rb") as config_file:
     CONFIG_DICT: dict = load(config_file)
 
@@ -56,7 +57,7 @@ class Target:
 @dataclass(slots=True)
 class FrameData:
     targets: list[Target]
-    annotated_frame: np.ndarray
+    frame: np.ndarray
 
 
 def get_frame_data() -> FrameData:
@@ -66,7 +67,7 @@ def get_frame_data() -> FrameData:
     frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
     
     # use machine learning model to classify objects in frame and save to cpu memory
-    results = _model.track(frame, persist=True)[0].cpu()
+    results = _model.track(frame, persist=True, verbose=False)[0].cpu()
     
     raw_targets = []
     for box in results.boxes.data.tolist():
@@ -81,12 +82,7 @@ def get_frame_data() -> FrameData:
         if int(box[6]) == CONFIG_DICT["person-class-id"] and box[5] > CONFIG_DICT["min-confidence"]:
             raw_targets.append(box)
     
-    annotated_frame = results.plot()
-    
-    return FrameData(
-        targets=[Target(*target) for target in raw_targets],
-        annotated_frame=annotated_frame
-    )
+    return FrameData(targets=[Target(*target) for target in raw_targets], frame=frame)
 
 
 def main() -> None:
