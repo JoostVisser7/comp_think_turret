@@ -84,13 +84,13 @@ def main():
                 running = False
             
             # if users presses ",": move first target to end of list
-            elif keypress == ord(",") and key_released:
+            elif keypress == ord(",") and key_released and frame_data.targets:
                 frame_data.targets.append(frame_data.targets.pop(0))
                 target_order.append(target_order.pop(0))
                 key_released = False
             
             # if user presses ".": move last target to beginning of list
-            elif keypress == ord(".") and key_released:
+            elif keypress == ord(".") and key_released and frame_data.targets:
                 frame_data.targets.insert(0, frame_data.targets.pop(-1))
                 target_order.insert(0, target_order.pop(-1))
                 key_released = False

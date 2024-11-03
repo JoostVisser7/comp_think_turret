@@ -6,7 +6,7 @@ baud-rate = 9600
 model-path = "./640px_100epoch.pt"
 
 # video config
-video-source = 1
+video-source = 0
 video-width = 640
 video-height = 480
 
