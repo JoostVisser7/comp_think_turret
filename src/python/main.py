@@ -21,10 +21,8 @@ def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool =
         arduino.write("home\n".encode())
     
     elif angle is not None:
-        angle_command = "r"
         dx, dy = angle
-        angle_command += f"{dx},{dy}\n"
-        print(angle_command)
+        angle_command = f"r{dx},{dy}\n"
         arduino.write(angle_command.encode())
 
 
@@ -52,8 +50,10 @@ def main():
             if frame_data.targets:
                 dx = frame_data.targets[0].center_x - CONFIG_DICT["video-width"] // 2
                 dy = frame_data.targets[0].center_y - CONFIG_DICT["video-height"] // 2
-                angles = calculate_rotation(dx=dx, dy=dy)
-                send_command(arduino=arduino, angle=angles)
+            else:
+                dx = dy = 0
+            angles = calculate_rotation(dx=dx, dy=dy)
+            send_command(arduino=arduino, angle=angles)
             
             cv2.imshow(winname="vision", mat=frame_data.annotated_frame)
             
