@@ -92,7 +92,7 @@ def ensure_target_order(unsorted_targets: list[Target], old_sequence: list[int])
 def main():
     
     """
-    Main loop. The high level operations of the loop are: Waiting for the arduino to be ready getting and sorting the
+    Main loop. The high level operations of the loop are: Waiting for the arduino to be ready; getting and sorting the
     detected targets; detecting and responding to user input; constructing and sending commands to arduino; annotating
     and displaying camera view; repeat.
     
