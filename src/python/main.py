@@ -12,7 +12,7 @@ from vision import get_frame_data, Target
 with open("./config.toml", "rb") as config_file:
     CONFIG_DICT: dict = load(config_file)
 
-
+# Function which sends information to arduino depending on the if statements
 def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool = False, trigger: bool = False) -> None:
     
     if trigger:
@@ -23,19 +23,20 @@ def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool =
     
     elif angle is not None:
         dx, dy = angle
+        # Sends a bytestring which contains dx and dy seperated with a comma
         angle_command = f"r{dx},{dy}\n"
-        # print(angle_command)
         arduino.write(angle_command.encode())
 
-
+# Function which determine how much the servos rotate given the value of dx and dy
 def calculate_rotation(dx: int, dy: int) -> tuple[int, int]:
     dx = np.sign(dx)
     dy = np.sign(dy)
-    
+    #compesates for how te servo is orientated
     return -dx, dy
 
-
+# Function which makes a list of targets and sort it depending
 def ensure_target_order(unsorted_targets: list[Target], old_order: list[int]) -> tuple[list, list]:
+    # Creating empty lists
     sorted_targets = []
     new_order = []
     
@@ -100,7 +101,7 @@ def main():
                 frame_data.targets.insert(0, frame_data.targets.pop(-1))
                 target_order.insert(0, target_order.pop(-1))
                 key_released = False
-            
+            # if user presses "h" turret moves to its home position
             elif keypress == ord("h") and key_released:
                 home = True
                 key_released = False
@@ -134,8 +135,10 @@ def main():
             # ----- annotating frame -----
             
             for i, target in enumerate(frame_data.targets):
+                # Makes a blue hitbox around all targets in the frame
                 box_colour = 255, 0, 0  # blue
                 if not i:
+                    # Makes a yellow hitbox around the first/selected target in the frame
                     box_colour = 0, 255, 255  # yellow
                     frame_data.frame = cv2.rectangle(
                         img=frame_data.frame,
@@ -151,6 +154,7 @@ def main():
                     color=box_colour,
                     thickness=2
                 )
+            # places a red dot at the center of the webcam frame
             frame_data.frame = cv2.circle(
                 img=frame_data.frame,
                 center=(CONFIG_DICT["video-width"] // 2, CONFIG_DICT["video-height"] // 2),
