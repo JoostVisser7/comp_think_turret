@@ -110,7 +110,7 @@ def main():
         arm_trigger = True
         trigger_cooldown_start = time()
         
-        target_order = []
+        target_sequence = []
         
         while running:
             trigger = False
@@ -121,7 +121,7 @@ def main():
                 continue
             
             targets, frame = get_frame_data()
-            targets, target_order = ensure_target_order(targets, target_order)
+            targets, target_sequence = ensure_target_order(targets, target_sequence)
             
             # ----- recording key presses -----
             
@@ -134,13 +134,13 @@ def main():
             # if users presses ",": move first target to end of list
             elif keypress == ord(",") and key_released and targets:
                 targets.append(targets.pop(0))
-                target_order.append(target_order.pop(0))
+                target_sequence.append(target_sequence.pop(0))
                 key_released = False
             
             # if user presses ".": move last target to beginning of list
             elif keypress == ord(".") and key_released and targets:
                 targets.insert(0, targets.pop(-1))
-                target_order.insert(0, target_order.pop(-1))
+                target_sequence.insert(0, target_sequence.pop(-1))
                 key_released = False
             
             # if user presses "h" turret moves to its home position
