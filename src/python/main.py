@@ -14,6 +14,7 @@ with open("./config.toml", "rb") as config_file:
 
 
 def send_command(arduino: Serial, *, rotate: tuple[int, int] = None, home: bool = False, trigger: bool = False) -> None:
+    
     """
     Interface with the arduino, converts function arguments to commands. If multiple arguments are given,
     it will send the highest priority command. Command priority is as follows: trigger > home > rotate.
@@ -119,8 +120,8 @@ def main():
             if not arduino.readline().strip() == b"ready":
                 continue
             
-            frame_data = get_frame_data()
-            frame_data.targets, target_order = ensure_target_order(frame_data.targets, target_order)
+            targets, frame = get_frame_data()
+            targets, target_order = ensure_target_order(targets, target_order)
             
             # ----- recording key presses -----
             
@@ -131,16 +132,17 @@ def main():
                 running = False
             
             # if users presses ",": move first target to end of list
-            elif keypress == ord(",") and key_released and frame_data.targets:
-                frame_data.targets.append(frame_data.targets.pop(0))
+            elif keypress == ord(",") and key_released and targets:
+                targets.append(targets.pop(0))
                 target_order.append(target_order.pop(0))
                 key_released = False
             
             # if user presses ".": move last target to beginning of list
-            elif keypress == ord(".") and key_released and frame_data.targets:
-                frame_data.targets.insert(0, frame_data.targets.pop(-1))
+            elif keypress == ord(".") and key_released and targets:
+                targets.insert(0, targets.pop(-1))
                 target_order.insert(0, target_order.pop(-1))
                 key_released = False
+            
             # if user presses "h" turret moves to its home position
             elif keypress == ord("h") and key_released:
                 home = True
@@ -156,16 +158,16 @@ def main():
             if time() - trigger_cooldown_start >= CONFIG_DICT["trigger-cooldown-seconds"]:
                 arm_trigger = True
             
-            if frame_data.targets:
+            if targets:
                 
                 # get pixel difference between target hitbox and center of frame
-                dx = frame_data.targets[0].hitbox_center_x - CONFIG_DICT["video-width"] // 2
-                dy = frame_data.targets[0].hitbox_center_y - CONFIG_DICT["video-height"] // 2
+                dx = targets[0].hitbox_center_x - CONFIG_DICT["video-width"] // 2
+                dy = targets[0].hitbox_center_y - CONFIG_DICT["video-height"] // 2
                 
                 # check if firing conditions apply and fire trigger
                 if (
-                    abs(dx) <= int(frame_data.targets[0].size_x * CONFIG_DICT["hitbox-size-fraction"]) and
-                    abs(dy) <= int(frame_data.targets[0].size_y * CONFIG_DICT["hitbox-size-fraction"]) and
+                    abs(dx) <= int(targets[0].size_x * CONFIG_DICT["hitbox-size-fraction"]) and
+                    abs(dy) <= int(targets[0].size_y * CONFIG_DICT["hitbox-size-fraction"]) and
                     arm_trigger
                 ):
                     trigger = True
@@ -179,7 +181,7 @@ def main():
             
             # ----- annotating frame -----
             
-            for i, target in enumerate(frame_data.targets):
+            for i, target in enumerate(targets):
                 # set box colour to blue
                 box_colour = 255, 0, 0  # blue
                 
@@ -187,8 +189,8 @@ def main():
                 if not i:
                     # set box colour to yellow and draw hitbox on primary target
                     box_colour = 0, 255, 255  # yellow
-                    frame_data.frame = cv2.rectangle(
-                        img=frame_data.frame,
+                    frame = cv2.rectangle(
+                        img=frame,
                         pt1=(target.hitbox1_x, target.hitbox1_y),
                         pt2=(target.hitbox2_x, target.hitbox2_y),
                         color=box_colour,
@@ -196,8 +198,8 @@ def main():
                     )
                 
                 # draw target box around target
-                frame_data.frame = cv2.rectangle(
-                    img=frame_data.frame,
+                frame = cv2.rectangle(
+                    img=frame,
                     pt1=(target.corner1_x, target.corner1_y),
                     pt2=(target.corner2_x, target.corner2_y),
                     color=box_colour,
@@ -205,8 +207,8 @@ def main():
                 )
                 
             # draw red dot at center of frame
-            frame_data.frame = cv2.circle(
-                img=frame_data.frame,
+            frame = cv2.circle(
+                img=frame,
                 center=(CONFIG_DICT["video-width"] // 2, CONFIG_DICT["video-height"] // 2),
                 radius=2,
                 color=(0, 0, 255),   # red
@@ -214,7 +216,7 @@ def main():
             )
             
             # display image
-            cv2.imshow(winname="vision", mat=frame_data.frame)
+            cv2.imshow(winname="vision", mat=frame)
         
         # turret return to home on shutdown
         send_command(arduino=arduino, home=True)
