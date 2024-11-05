@@ -3,14 +3,14 @@
 /*
  * Configuration of global constants
  */
-constexpr int hor_servo_home = 45,
-              hor_servo_min_angle = 0,
-              hor_servo_max_angle = 90,
+constexpr int hor_servo_home = 0,
+              hor_servo_min_angle = -170,
+              hor_servo_max_angle = 170,
               hor_servo_pin = 3,
 
-              ver_servo_home = 0,
-              ver_servo_min_angle = -90,
-              ver_servo_max_angle = 90,
+              ver_servo_home = 90,
+              ver_servo_min_angle = 50,
+              ver_servo_max_angle = 130,
               ver_servo_pin = 4,
 
               tri_servo_cold = 25,
@@ -119,7 +119,9 @@ void loop() {
   if (Serial.available() > 0) {
     String message = Serial.readStringUntil('\n');
     
+    Serial.println(ver_servo_target_angle);
     message_parser(message);   // interpret message and change appropriate globals
+    Serial.println(ver_servo_target_angle);
 
     if (triggered) {    // pull trigger
       tri_servo.write(tri_servo_hot);

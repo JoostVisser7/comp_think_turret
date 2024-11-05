@@ -3,6 +3,7 @@ from time import time, sleep
 
 import cv2
 from serial import Serial
+import numpy as np
 
 from vision import get_frame_data, Target
 
@@ -23,12 +24,15 @@ def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool =
     elif angle is not None:
         dx, dy = angle
         angle_command = f"r{dx},{dy}\n"
+        # print(angle_command)
         arduino.write(angle_command.encode())
 
 
 def calculate_rotation(dx: int, dy: int) -> tuple[int, int]:
+    dx = np.sign(dx)
+    dy = np.sign(dy)
     
-    return -dx, -dy
+    return -dx, dy
 
 
 def ensure_target_order(unsorted_targets: list[Target], old_order: list[int]) -> tuple[list, list]:
@@ -59,6 +63,7 @@ def main():
         
         running = True
         key_released = True
+        home = False
         
         trigger_ready = True
         trigger_cooldown_start = time()
@@ -67,6 +72,7 @@ def main():
         
         while running:
             trigger = False
+            home = False
             
             # wait until arduino is ready for next command
             if not arduino.readline().strip() == b"ready":
@@ -95,6 +101,10 @@ def main():
                 target_order.insert(0, target_order.pop(-1))
                 key_released = False
             
+            elif keypress == ord("h") and key_released:
+                home = True
+                key_released = False
+            
             # cv2.waitKey() returns 255 if no key is pressed
             elif keypress == 255:
                 key_released = True
@@ -119,7 +129,7 @@ def main():
             else:
                 dx = dy = 0
             angles = calculate_rotation(dx=dx, dy=dy)
-            send_command(arduino=arduino, angle=angles, trigger=trigger)
+            send_command(arduino=arduino, angle=angles, trigger=trigger, home=home)
             
             # ----- annotating frame -----
             
