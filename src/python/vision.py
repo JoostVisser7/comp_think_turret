@@ -45,7 +45,7 @@ class Target:
             c1y: float,
             c2x: float,
             c2y: float,
-            track_id: float,
+            track_id: float | None,
             confidence: float,
             classification: float
     ) -> None:
