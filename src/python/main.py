@@ -12,7 +12,6 @@ from vision import get_frame_data, Target
 with open("./config.toml", "rb") as config_file:
     CONFIG_DICT: dict = load(config_file)
 
-# ik contribute niks
 
 def send_command(arduino: Serial, *, rotate: tuple[int, int] = None, home: bool = False, trigger: bool = False) -> None:
     

@@ -77,6 +77,8 @@ class Target:
 
 # old implementation
 # @dataclass(slots=True)
+
+# Previous data transfer method to main in the form of classes
 # class FrameData:
 #     targets: list[Target]
 #     frame: np.ndarray
