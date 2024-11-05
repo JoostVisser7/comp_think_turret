@@ -3,14 +3,14 @@
 /*
  * Configuration of global constants
  */
-constexpr int hor_servo_home = 0,
-              hor_servo_min_angle = -170,
+constexpr int hor_servo_home = 90,
+              hor_servo_min_angle = 0,
               hor_servo_max_angle = 170,
               hor_servo_pin = 3,
 
               ver_servo_home = 90,
-              ver_servo_min_angle = 50,
-              ver_servo_max_angle = 130,
+              ver_servo_min_angle = 70,
+              ver_servo_max_angle = 110,
               ver_servo_pin = 4,
 
               tri_servo_cold = 25,
