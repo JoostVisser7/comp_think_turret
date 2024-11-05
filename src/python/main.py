@@ -12,8 +12,18 @@ from vision import get_frame_data, Target
 with open("./config.toml", "rb") as config_file:
     CONFIG_DICT: dict = load(config_file)
 
-# Function which sends information to arduino depending on the if statements
-def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool = False, trigger: bool = False) -> None:
+
+def send_command(arduino: Serial, *, rotate: tuple[int, int] = None, home: bool = False, trigger: bool = False) -> None:
+    """
+    Interface with the arduino, converts function arguments to commands. If multiple arguments are given,
+    it will send the highest priority command. Command priority is as follows: trigger > home > rotate.
+
+    :param arduino: (Serial) the arduino to send the command to.
+    :param rotate: (tuple[int, int]) degrees of x and degrees of y to turn.
+    :param home: (bool) set to True if the turret must return to configured home position.
+    :param trigger: (bool) set to True if the turret must fire a dart.
+    :return: (None)
+    """
     
     if trigger:
         arduino.write("trigger\n".encode())
@@ -21,28 +31,51 @@ def send_command(arduino: Serial, *, angle: tuple[int, int] = None, home: bool =
     elif home:
         arduino.write("home\n".encode())
     
-    elif angle is not None:
-        dx, dy = angle
-        # Sends a bytestring which contains dx and dy seperated with a comma
+    elif rotate is not None:
+        dx, dy = rotate
         angle_command = f"r{dx},{dy}\n"
         arduino.write(angle_command.encode())
+    
+    else:
+        raise ValueError("At least one command must be given")
 
-# Function which determine how much the servos rotate given the value of dx and dy
+
 def calculate_rotation(dx: int, dy: int) -> tuple[int, int]:
-    dx = np.sign(dx)
+    
+    """
+    Takes the difference from frame center to the hitbox center in pixels and converts it to degrees to send to the
+    arduino. This function can be changed to any conversion operation to tune the behaviour of the turret.
+    
+    :param dx: (int) pixel difference between frame center and target hitbox center in x
+    :param dy: (int) pixel difference between frame center and target hitbox center in y
+    :return: (tuple[int, int]) degrees to turn the horizontal direction and vertical direction
+    """
+    
+    dx = -np.sign(dx)
     dy = np.sign(dy)
-    #compesates for how te servo is orientated
-    return -dx, dy
+    
+    return dx, dy
 
-# Function which makes a list of targets and sort it depending
-def ensure_target_order(unsorted_targets: list[Target], old_order: list[int]) -> tuple[list, list]:
-    # Creating empty lists
+
+def ensure_target_order(unsorted_targets: list[Target], old_sequence: list[int]) -> tuple[list[Target], list[int]]:
+    
+    """
+    Each loop the ML model might return potential targets in any arbitrary sequence. The primary target is selected as
+    the first entry in the target list. To ensure consistency for selecting the primary target and switching targets,
+    this function matches the sequence of the new targets to the sequence of the old targets. Old targets no longer
+    present in the new list are removed, new targets that weren't present in the old sequence are appended to the end.
+    
+    :param unsorted_targets: (list[Target]) list of the new targets
+    :param old_sequence: (list[int]) list of previous sequence
+    :return: (tuple[list[Target], list[int]]) ordered sequence of targets, new sequence IDs
+    """
+    
     sorted_targets = []
     new_order = []
     
     # for every target id in order, remove the target with the same track_id from the unsorted list and add it to the
     # sorted list
-    for target_id in old_order:
+    for target_id in old_sequence:
         target_index = next((i for i, target in enumerate(unsorted_targets) if target.track_id == target_id), None)
         if target_index is not None:
             sorted_targets.append(unsorted_targets.pop(target_index))
@@ -57,16 +90,23 @@ def ensure_target_order(unsorted_targets: list[Target], old_order: list[int]) ->
 
 def main():
     
+    """
+    Main loop. The high level operations of the loop are: Waiting for the arduino to be ready getting and sorting the
+    detected targets; detecting and responding to user input; constructing and sending commands to arduino; annotating
+    and displaying camera view; repeat.
+    
+    :return: (None)
+    """
+    
     # establish arduino connection and give the microcontroller time to initialize
-    # running in context manager such that the connection gets closed properly if an exception is raised during runtime
+    # running in context manager so that the connection gets closed properly if an exception is raised during runtime
     with Serial(port=CONFIG_DICT["com-port"], baudrate=CONFIG_DICT["baud-rate"]) as arduino:
         sleep(2)
         
+        # setting up runtime states
         running = True
         key_released = True
-        home = False
-        
-        trigger_ready = True
+        arm_trigger = True
         trigger_cooldown_start = time()
         
         target_order = []
@@ -112,33 +152,40 @@ def main():
             
             # ----- determining command to send to arduino -----
             
+            # check whether cooldown is finished and arm trigger if this is the case.
             if time() - trigger_cooldown_start >= CONFIG_DICT["trigger-cooldown-seconds"]:
-                trigger_ready = True
+                arm_trigger = True
             
             if frame_data.targets:
+                
+                # get pixel difference between target hitbox and center of frame
                 dx = frame_data.targets[0].hitbox_center_x - CONFIG_DICT["video-width"] // 2
                 dy = frame_data.targets[0].hitbox_center_y - CONFIG_DICT["video-height"] // 2
                 
+                # check if firing conditions apply and fire trigger
                 if (
                     abs(dx) <= int(frame_data.targets[0].size_x * CONFIG_DICT["hitbox-size-fraction"]) and
                     abs(dy) <= int(frame_data.targets[0].size_y * CONFIG_DICT["hitbox-size-fraction"]) and
-                    trigger_ready
+                    arm_trigger
                 ):
                     trigger = True
-                    trigger_ready = False
+                    arm_trigger = False
                     trigger_cooldown_start = time()
             else:
                 dx = dy = 0
             angles = calculate_rotation(dx=dx, dy=dy)
-            send_command(arduino=arduino, angle=angles, trigger=trigger, home=home)
+            
+            send_command(arduino=arduino, rotate=angles, trigger=trigger, home=home)
             
             # ----- annotating frame -----
             
             for i, target in enumerate(frame_data.targets):
-                # Makes a blue hitbox around all targets in the frame
+                # set box colour to blue
                 box_colour = 255, 0, 0  # blue
+                
+                # check if target is primary target
                 if not i:
-                    # Makes a yellow hitbox around the first/selected target in the frame
+                    # set box colour to yellow and draw hitbox on primary target
                     box_colour = 0, 255, 255  # yellow
                     frame_data.frame = cv2.rectangle(
                         img=frame_data.frame,
@@ -147,6 +194,8 @@ def main():
                         color=box_colour,
                         thickness=2
                     )
+                
+                # draw target box around target
                 frame_data.frame = cv2.rectangle(
                     img=frame_data.frame,
                     pt1=(target.corner1_x, target.corner1_y),
@@ -154,7 +203,8 @@ def main():
                     color=box_colour,
                     thickness=2
                 )
-            # places a red dot at the center of the webcam frame
+                
+            # draw red dot at center of frame
             frame_data.frame = cv2.circle(
                 img=frame_data.frame,
                 center=(CONFIG_DICT["video-width"] // 2, CONFIG_DICT["video-height"] // 2),
@@ -163,6 +213,7 @@ def main():
                 thickness=-1
             )
             
+            # display image
             cv2.imshow(winname="vision", mat=frame_data.frame)
         
         # turret return to home on shutdown
