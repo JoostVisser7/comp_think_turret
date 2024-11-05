@@ -11,6 +11,7 @@ from ultralytics import YOLO
 with open("./config.toml", "rb") as config_file:
     CONFIG_DICT: dict = load(config_file)
 
+
 _model: YOLO = YOLO(CONFIG_DICT["model-path"])
 _camera: Webcam = Webcam(src=CONFIG_DICT["video-source"], w=CONFIG_DICT["video-width"], h=CONFIG_DICT["video-height"])
 
@@ -37,8 +38,8 @@ class Target:
         "hitbox2_x",
         "hitbox2_y"
     ]
-    
     def __init__(
+    #Creates an instance of the target class and defines the variable type
             self,
             c1x: float,
             c1y: float,
@@ -48,34 +49,37 @@ class Target:
             confidence: float,
             classification: float
     ) -> None:
+        #Defining the corners of the webcam frame
         self.corner1_x: int = round(c1x)
         self.corner1_y: int = round(c1y)
         self.corner2_x: int = round(c2x)
         self.corner2_y: int = round(c2y)
-        
+        #Definging the center of the webcam frame
         self.center_x: int = (self.corner1_x + self.corner2_x) // 2
         self.center_y: int = (self.corner1_y + self.corner2_y) // 2
         self.size_x: int = abs(self.corner1_x - self.center_x)
         self.size_y: int = abs(self.corner1_y - self.center_y)
-        
+        #Defining the hitbox and center around the target
         self.hitbox_center_x: int = self.center_x + int(self.size_x * CONFIG_DICT["hitbox-offset-x-fraction"])
         self.hitbox_center_y: int = self.center_y + int(self.size_y * CONFIG_DICT["hitbox-offset-y-fraction"])
         self.hitbox1_x: int = self.hitbox_center_x - int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
         self.hitbox1_y: int = self.hitbox_center_y - int(self.size_y * CONFIG_DICT["hitbox-size-fraction"])
         self.hitbox2_x: int = self.hitbox_center_x + int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
         self.hitbox2_y: int = self.hitbox_center_y + int(self.size_x * CONFIG_DICT["hitbox-size-fraction"])
-        
+        #track_id is either and integer or none, the code expects something for track_id so if it is not there it is set to none
         self.track_id: int | None = int(track_id) if track_id is not None else None
+        #Makes an instance attribute called confidence and classification
         self.confidence: float = confidence
         self.classification: int = int(classification)
 
-
+#makes a class with optimized memory usage
 @dataclass(slots=True)
+#makes a Frame data class which makes a  list of al the recognized targets
 class FrameData:
     targets: list[Target]
     frame: np.ndarray
 
-
+#function which allows the code to use the webcam
 def get_frame_data() -> FrameData:
     
     # get frame from camera and convert to BGR because cv2 works with BGR for some reason
@@ -84,7 +88,7 @@ def get_frame_data() -> FrameData:
     
     # use machine learning model to classify objects in frame and save to cpu memory
     results = _model.track(frame, persist=True, verbose=False)[0].cpu()
-    
+    #creates an empty array for the recognized targets
     raw_targets = []
     for box in results.boxes.data.tolist():
         # get all the relevant data of all boxes stored in a list of lists containing
@@ -109,7 +113,7 @@ def get_frame_data() -> FrameData:
         # if the box is too small vertically start next iteration early
         if abs(box[1] - box[3]) < CONFIG_DICT["min-target-size-y"]:
             continue
-        
+        #adds the box to the target list, thus creates a list of lists
         raw_targets.append(box)
     
     return FrameData(targets=[Target(*target) for target in raw_targets], frame=frame)
@@ -125,6 +129,5 @@ def main() -> None:
             break
 
 
-# only call main() main when this file is ran directly as opposed to imported
 if __name__ == "__main__":
     main()
