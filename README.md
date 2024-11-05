@@ -14,6 +14,8 @@ To start the procedure, make sure that the arduino code is uploaded to the ardui
 2. The comma key can be pressed to switch between target
 3. The dot key can be pressed to switch back between targets
 4. H can be pressed to command the setup to return to its home position
+
 The selected target will show a yellow hitbox and the remaining targets will show a blue hitbox.
+
 If there are any questions on how the code works,  you can look up the documentation of the code in ./docs/reference.md or look at the commends above the code.
 
