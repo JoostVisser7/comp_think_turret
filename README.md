@@ -1,5 +1,5 @@
 # Project Computational Thinking
-This project aims to show our understanding of programming world. The assignment is to write code which can interact with an arduino to achieve a certain goal.
+This project aims to show our understanding of the programming world. The assignment is to write code which can interact with an arduino to achieve a certain goal.
 The goal of our project is to make a self-aiming turret. This will be achieved by using a webcam, detecting the targets, aiming at the targets and finally pull the trigger.
 For detecting the targets a 3rd party library is used. This library is called ultralytics, which uses the YOLO11n model. This library uses ML computer vision to identify persons in the frame of the webcam, this information is used to determine the vertical and horizontal distance between the target and the middle of the screen.
 These distance variables are communicated to the arduino, which in turn controls the servos to rotate the setup. When the center of the frame touches the hitbox of the identified target, the trigger mechanism is activated. 
